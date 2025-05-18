@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Event - Community Pulse{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Create New Event</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('events.create_event') }}" enctype="multipart/form-data">
+                        {{ form.csrf_token }}
+                        
+                        <div class="form-group mb-3">
+                            <label for="title">Event Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="category">Category <span class="text-danger">*</span></label>
+                            <select class="form-control" id="category" name="category" required>
+                                <option value="">Select a category</option>
+                                <option value="garage_sale">Garage Sale</option>
+                                <option value="sports_match">Sports Match</option>
+                                <option value="community_class">Community Class</option>
+                                <option value="volunteer_opportunity">Volunteer Opportunity</option>
+                                <option value="exhibition">Exhibition</option>
+                                <option value="festival">Small Festival or Celebration</option>
+                            </select>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="event_date">Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="event_date" name="event_date" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="event_time">Time <span class="text-danger">*</span></label>
+                                    <input type="time" class="form-control" id="event_time" name="event_time" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="location">Location <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="location" name="location" required>
+                            <small class="form-text text-muted">Enter a physical address or location name</small>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="description">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="max_attendees">Maximum Attendees (Optional)</label>
+                            <input type="number" class="form-control" id="max_attendees" name="max_attendees" min="1">
+                            <small class="form-text text-muted">Leave blank for unlimited attendance</small>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="image">Event Image (Optional)</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="contact_info">Contact Information <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="contact_info" name="contact_info" required>
+                            <small class="form-text text-muted">Phone number or email for attendees to reach you</small>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="enable_notifications" name="enable_notifications" checked>
+                            <label class="form-check-label" for="enable_notifications">Enable automatic notifications to attendees</label>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('events.list_events') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create Event</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Client-side validation and location autocomplete could be added here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize any JavaScript components
+    });
+</script>
+{% endblock %}

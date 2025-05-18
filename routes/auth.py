@@ -23,6 +23,8 @@ def register():
     
     return render_template('auth/register.html', title='Register', form=form)
 
+from urllib.parse import urlparse
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -41,14 +43,17 @@ def login():
             return redirect(url_for('auth.login'))
         
         login_user(user, remember=form.remember_me.data)
+        
+        # 🔐 Admins go to admin dashboard by default
         next_page = request.args.get('next')
         if not next_page or urlparse(next_page).netloc != '':
-            next_page = url_for('events.home')
+            next_page = url_for('admin.dashboard') if user.role == 'admin' else url_for('events.home')
         
         flash('You have been logged in successfully!', 'success')
         return redirect(next_page)
     
     return render_template('auth/login.html', title='Sign In', form=form)
+
 
 @auth_bp.route('/logout')
 def logout():
@@ -60,3 +65,7 @@ def logout():
 @login_required
 def profile():
     return render_template('auth/profile.html', title='User Profile')
+
+@auth_bp.route('/forgot_password' , methods=['GET','POST'])
+def reset_password_request():
+    return render_template('auth/reset_password_request.html')

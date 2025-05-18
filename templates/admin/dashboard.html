@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Community Pulse{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Admin Panel</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('admin.dashboard') }}" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('admin.user_list') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-users me-2"></i> User Management
+                    </a>
+                    <a href="{{ url_for('admin.event_list') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-calendar-alt me-2"></i> Event Management
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="list-group-item list-group-item-action text-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Dashboard Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Stats Cards -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-primary text-white h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Users</h5>
+                                    <h2 class="display-4">{{ stats.total_users }}</h2>
+                                </div>
+                                <div class="card-footer d-flex align-items-center justify-content-between">
+                                    <a href="{{ url_for('admin.user_list') }}"
+                                        class="text-white text-decoration-none">View Details</a>
+                                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-success text-white h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Events</h5>
+                                    <h2 class="display-4">{{ stats.total_events }}</h2>
+                                </div>
+                                <div class="card-footer d-flex align-items-center justify-content-between">
+                                    <a href="{{ url_for('admin.event_list') }}" class="text-white text-decoration-none">View
+                                        Details</a>
+                                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-warning text-dark h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pending Events</h5>
+                                    <h2 class="display-4">{{ stats.pending_events }}</h2>
+                                </div>
+                                <div class="card-footer d-flex align-items-center justify-content-between">
+                                    <a href="{{ url_for('admin.event_list', status='pending') }}"
+                                        class="text-dark text-decoration-none">View Details</a>
+                                    <div class="small text-dark"><i class="fas fa-angle-right"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Recent Activity</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Action</th>
+                                                    <th>Description</th>
+                                                    <th>User</th>
+                                                    <th>Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for log in recent_logs %}
+                                                <tr>
+                                                    <td>{{ log.action }}</td>
+                                                    <td>{{ log.description }}</td>
+                                                    <td>{{ log.user.email }}</td>
+                                                    <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                                </tr>
+                                                {% else %}
+                                                <tr>
+                                                    <td colspan="4" class="text-center">No recent activity</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Quick Actions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <a href="{{ url_for('admin.event_list', status='pending') }}"
+                                                class="btn btn-warning btn-lg w-100 mb-3">
+                                                <i class="fas fa-clock me-2"></i> Review Pending Events
+                                            </a>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <a href="{{ url_for('admin.user_list', filter='flagged') }}"
+                                                class="btn btn-danger btn-lg w-100 mb-3">
+                                                <i class="fas fa-flag me-2"></i> View Flagged Users
+                                            </a>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <a href="{{ url_for('admin.user_list', filter='verified') }}"
+                                                class="btn btn-success btn-lg w-100 mb-3">
+                                                <i class="fas fa-check-circle me-2"></i> Manage Verified Organizers
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

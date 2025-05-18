@@ -1,11 +1,154 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>harsh</h1>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Community Pulse - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 text-center mb-4">
+        <h1 class="display-4">Welcome to Community Pulse</h1>
+        <p class="lead">Discover and participate in events happening in your community.</p>
+    </div>
+</div>
+
+<div class="row justify-content-center mb-5">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form id="location-form">
+                    <div class="input-group">
+                        <input type="text" id="location-input" class="form-control" placeholder="Enter your location or allow automatic detection">
+                        <button class="btn btn-primary" type="button" id="location-btn">
+                            <i class="fas fa-map-marker-alt me-2"></i>Detect Location
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">We'll use this to show you events near you</small>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-center mb-4">Upcoming Events Near You</h2>
+        <div class="category-filters text-center mb-4">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary active" data-filter="all">All Events</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="garage-sales">Garage Sales</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="sports">Sports</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="classes">Classes</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="volunteer">Volunteer</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="exhibitions">Exhibitions</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="festivals">Festivals</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" id="featured-events">
+    {% for event in featured_events %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 event-card" data-category="{{ event.category }}">
+            {% if event.image %}
+            <img src="{{ event.image }}" class="card-img-top" alt="{{ event.title }}">
+            {% else %}
+            <div class="card-img-top default-event-img" >
+                <i class="fas {{ event.icon }} fa-3x text-white"></i>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <span class="badge bg-primary mb-2">{{ event.category }}</span>
+                {% if event.verified_organizer %}
+                <span class="badge bg-success mb-2">
+                    <i class="fas fa-check-circle"></i> Verified
+                </span>
+                {% endif %}
+                <h5 class="card-title">{{ event.title }}</h5>
+                <p class="card-text text-muted">
+                    <i class="fas fa-calendar-alt me-2"></i>{{ event.date }}
+                    <br>
+                    <i class="fas fa-map-marker-alt me-2"></i>{{ event.location }}
+                </p>
+                <p class="card-text truncate-3-lines">{{ event.description }}</p>
+            </div>
+            <div class="card-footer bg-white border-top-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-users me-1"></i>{{ event.attendees }} attending
+                        </small>
+                    </div>
+                    <a href="{{ url_for('events.detail', event_id=event.id) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>No events found nearby. Try changing your location or create your own event!
+        </div>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('events.create_event') }}" class="btn btn-primary"><i class="fas fa-plus-circle me-2"></i>Create New Event</a>
+        {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary"><i class="fas fa-sign-in-alt me-2"></i>Login to Create Event</a>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h3><i class="fas fa-bullhorn text-primary me-2"></i>Community Highlights</h3>
+                <hr>
+                <div class="highlights-list">
+                    {% for highlight in community_highlights %}
+                    <div class="highlight-item mb-3">
+                        <h5>{{ highlight.title }}</h5>
+                        <p>{{ highlight.description }}</p>
+                        <small class="text-muted">{{ highlight.date }}</small>
+                    </div>
+                    {% else %}
+                    <p>No community highlights available.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h3><i class="fas fa-star text-primary me-2"></i>Popular Organizers</h3>
+                <hr>
+                <div class="organizers-list">
+                    {% for organizer in popular_organizers %}
+                    <div class="organizer-item mb-3 d-flex align-items-center">
+                        <div class="organizer-avatar me-3">
+                            {% if organizer.avatar %}
+                            <img src="{{ organizer.avatar }}" alt="{{ organizer.name }}" class="rounded-circle" width="50">
+                            {% else %}
+                            <div class="default-avatar rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <span>{{ organizer.name[0] }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ organizer.name }}</h5>
+                            <p class="text-muted mb-0">{{ organizer.events_count }} events organized</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p>No organizers information available.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% endblock %}

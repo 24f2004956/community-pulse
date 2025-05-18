@@ -1,17 +1,18 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import current_user, login_required
-from app import db
 from models import User, Event
+from extensions import db
 from functools import wraps
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-# Admin required decorator
+# Admin-required decorator
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or current_user.role != 'admin':
-            abort(403)
+            flash("You are not authorized to access this page.", "danger")
+            return abort(403)
         return f(*args, **kwargs)
     return decorated_function
 
@@ -19,17 +20,16 @@ def admin_required(f):
 @login_required
 @admin_required
 def dashboard():
-    # Count statistics for dashboard
     total_users = User.query.count()
     total_events = Event.query.count()
     pending_events = Event.query.filter_by(is_approved=False, is_cancelled=False).count()
     approved_events = Event.query.filter_by(is_approved=True, is_cancelled=False).count()
     
-    # Get recent pending events
-    recent_pending = Event.query.filter_by(is_approved=False, is_cancelled=False).order_by(Event.created_at.desc()).limit(5).all()
+    recent_pending = Event.query.filter_by(is_approved=False, is_cancelled=False)\
+                                .order_by(Event.created_at.desc()).limit(5).all()
     
     return render_template(
-        'admin/dashboard.html', 
+        'admin/dashboard.html',
         title='Admin Dashboard',
         total_users=total_users,
         total_events=total_events,
@@ -51,11 +51,10 @@ def user_list():
 def toggle_ban(user_id):
     user = User.query.get_or_404(user_id)
     
-    # Don't allow admins to ban themselves or other admins
     if user.role == 'admin':
-        flash('Cannot ban an admin user.', 'danger')
+        flash('You cannot ban another admin.', 'danger')
         return redirect(url_for('admin.user_list'))
-    
+
     user.is_banned = not user.is_banned
     db.session.commit()
     
@@ -71,8 +70,8 @@ def toggle_organizer(user_id):
     user.is_verified_organizer = not user.is_verified_organizer
     db.session.commit()
     
-    action = 'granted' if user.is_verified_organizer else 'removed'
-    flash(f'Verified Organizer status has been {action} for {user.username}.', 'success')
+    status = "granted" if user.is_verified_organizer else "revoked"
+    flash(f'Organizer status {status} for {user.username}.', 'success')
     return redirect(url_for('admin.user_list'))
 
 @admin_bp.route('/events')
@@ -82,20 +81,18 @@ def event_list():
     status = request.args.get('status', 'pending')
     
     if status == 'pending':
-        events = Event.query.filter_by(is_approved=False, is_cancelled=False).order_by(Event.created_at.desc()).all()
+        events = Event.query.filter_by(is_approved=False, is_cancelled=False)\
+                            .order_by(Event.created_at.desc()).all()
     elif status == 'approved':
-        events = Event.query.filter_by(is_approved=True, is_cancelled=False).order_by(Event.start_time.desc()).all()
+        events = Event.query.filter_by(is_approved=True, is_cancelled=False)\
+                            .order_by(Event.start_time.desc()).all()
     elif status == 'cancelled':
-        events = Event.query.filter_by(is_cancelled=True).order_by(Event.updated_at.desc()).all()
+        events = Event.query.filter_by(is_cancelled=True)\
+                            .order_by(Event.updated_at.desc()).all()
     else:
         events = Event.query.order_by(Event.created_at.desc()).all()
     
-    return render_template(
-        'admin/events.html', 
-        title='Event Management', 
-        events=events,
-        status=status
-    )
+    return render_template('admin/events.html', title='Event Management', events=events, status=status)
 
 @admin_bp.route('/events/<int:event_id>/approve', methods=['POST'])
 @login_required
@@ -105,7 +102,7 @@ def approve_event(event_id):
     event.is_approved = True
     db.session.commit()
     
-    flash(f'Event "{event.title}" has been approved.', 'success')
+    flash(f'Event "{event.title}" approved.', 'success')
     return redirect(url_for('admin.event_list', status='pending'))
 
 @admin_bp.route('/events/<int:event_id>/reject', methods=['POST'])
@@ -116,7 +113,7 @@ def reject_event(event_id):
     event.is_cancelled = True
     db.session.commit()
     
-    flash(f'Event "{event.title}" has been rejected.', 'warning')
+    flash(f'Event "{event.title}" rejected.', 'warning')
     return redirect(url_for('admin.event_list', status='pending'))
 
 @admin_bp.route('/events/<int:event_id>/view')
@@ -132,9 +129,7 @@ def view_event(event_id):
 def flag_event(event_id):
     event = Event.query.get_or_404(event_id)
     reason = request.form.get('reason', '')
+    # Implement actual flagging logic here (e.g., log, flag table, etc.)
     
-    # Add flagging logic here
-    # This could involve adding a flag to the event or creating a notification for review
-    
-    flash(f'Event "{event.title}" has been flagged for review.', 'warning')
+    flash(f'Event "{event.title}" flagged for: {reason}', 'warning')
     return redirect(url_for('admin.event_list'))

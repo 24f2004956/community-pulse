@@ -22,52 +22,53 @@ def home():
 
 @events_bp.route('/events')
 def list_events():
-    # Filter parameters
+    # Filters
     category = request.args.get('category', '')
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
-    
+    page = request.args.get('page', 1, type=int)
+
     # Base query
     query = Event.query.filter(
         Event.is_approved == True,
         Event.is_cancelled == False,
         Event.start_time > datetime.utcnow()
     )
-    
+
     # Apply filters
     if category:
         query = query.filter(Event.category == category)
-    
     if date_from:
         try:
             date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
             query = query.filter(Event.start_time >= date_from_obj)
         except ValueError:
             pass
-    
     if date_to:
         try:
-            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
-            date_to_obj = date_to_obj + timedelta(days=1)  # Include the entire day
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1)
             query = query.filter(Event.start_time <= date_to_obj)
         except ValueError:
             pass
-    
-    # Execute query and sort by start time
-    events = query.order_by(Event.start_time.asc()).all()
-    
-    # Get unique categories for filter
+
+    # Pagination
+    pagination = query.order_by(Event.start_time.asc()).paginate(page=page, per_page=6, error_out=False)
+    events = pagination.items
+
+    # Categories
     categories = db.session.query(Event.category).distinct().all()
     categories = [cat[0] for cat in categories]
-    
+
     return render_template(
-        'events/list.html', 
-        events=events, 
+        'events/list.html',
+        events=events,
+        pagination=pagination,  # ✅ FIX: now passed to template
         categories=categories,
         selected_category=category,
         date_from=date_from,
         date_to=date_to
     )
+
 
 @events_bp.route('/events/create', methods=['GET', 'POST'])
 @login_required

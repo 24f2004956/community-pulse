@@ -1,5 +1,6 @@
 import os
 from flask import Flask
+from models import User
 
 from extensions import db, login_manager, migrate
 # Initialize extensions
@@ -31,7 +32,9 @@ def create_app():
     with app.app_context():
         db.create_all()
     
+    
     return app
+    
 
 if __name__ == '__main__':
     app = create_app()
