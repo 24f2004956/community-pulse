@@ -74,6 +74,33 @@ class Event(db.Model):
             'organizer_name': self.organizer.username
         }
 
+class Issue(db.Model):
+    __tablename__ = 'issues'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(50), nullable=False)
+
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    location_text = db.Column(db.String(200), nullable=True)
+
+    image = db.Column(db.String(200), nullable=True)  # Single image for now
+    is_anonymous = db.Column(db.Boolean, default=False)
+
+    status = db.Column(db.String(20), default='Reported')  # Reported, In Progress, Resolved
+    upvotes = db.Column(db.Integer, default=0)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    user = db.relationship('User', backref='issues')
+
+    def __repr__(self):
+        return f"<Issue {self.title} - {self.status}>"    
+
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -95,4 +122,19 @@ class Notification(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+from flask_wtf import FlaskForm
+from wtforms import StringField, TextAreaField, DateTimeField, FloatField, SelectField
+from wtforms.validators import DataRequired
+
+class EventForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    description = TextAreaField('Description', validators=[DataRequired()])
+    location = StringField('Location', validators=[DataRequired()])
+    latitude = FloatField('Latitude', validators=[DataRequired()])
+    longitude = FloatField('Longitude', validators=[DataRequired()])
+    start_time = DateTimeField('Start Time', validators=[DataRequired()], format='%Y-%m-%d %H:%M')
+    end_time = DateTimeField('End Time', validators=[DataRequired()], format='%Y-%m-%d %H:%M')
+    category = SelectField('Category', choices=[('sports', 'Sports'), ('volunteer', 'Volunteer')], validators=[DataRequired()])
 

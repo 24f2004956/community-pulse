@@ -96,6 +96,53 @@
     </div>
     {% endfor %}
 </div>
+<div class="row mt-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">Community Issues Near You</h2>
+    </div>
+</div>
+
+<div class="row" id="issues-section">
+    {% for issue in issues %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 issue-card">
+            {% if issue.image %}
+            <img src="{{ issue.image }}" class="card-img-top" alt="{{ issue.title }}">
+            {% endif %}
+            <div class="card-body">
+                <span class="badge bg-danger mb-2">{{ issue.category }}</span>
+                <h5 class="card-title">{{ issue.title }}</h5>
+                <p class="card-text text-muted">
+                    <i class="fas fa-map-marker-alt me-2"></i>{{ issue.location }}
+                    <br>
+                    <i class="fas fa-clock me-2"></i>{{ issue.created_at.strftime('%b %d, %Y') }}
+                </p>
+                <p class="card-text truncate-3-lines">{{ issue.description }}</p>
+            </div>
+            <div class="card-footer bg-white border-top-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="fas fa-thumbs-up me-1"></i>{{ issue.upvotes }} upvotes
+                    </small>
+                    <a href="{{ url_for('issues.detail', issue_id=issue.id) }}" class="btn btn-sm btn-outline-danger">View Details</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center">
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>No issues reported nearby.
+        </div>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('issues.report') }}" class="btn btn-danger"><i class="fas fa-plus-circle me-2"></i>Report an Issue</a>
+        {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-danger"><i class="fas fa-sign-in-alt me-2"></i>Login to Report</a>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
 
 <div class="row mt-5">
     <div class="col-md-6 mb-4">
@@ -150,5 +197,29 @@
 {% endblock %}
 
 {% block additional_js %}
-<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+<script>
+document.getElementById('location-btn').addEventListener('click', function () {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            // Send location to backend
+            fetch(`/set-location?lat=${latitude}&lon=${longitude}`)
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();  // Reload page to apply location-based filters
+                    } else {
+                        alert("Failed to set location.");
+                    }
+                });
+        }, function (error) {
+            alert("Unable to detect location. Please enter it manually.");
+        });
+    } else {
+        alert("Geolocation is not supported by your browser.");
+    }
+});
+</script>
+
 {% endblock %}

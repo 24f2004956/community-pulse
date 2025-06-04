@@ -28,6 +28,13 @@ def dashboard():
     recent_pending = Event.query.filter_by(is_approved=False, is_cancelled=False)\
                                 .order_by(Event.created_at.desc()).limit(5).all()
     
+    stats = {
+        'total_users': User.query.count(),
+        'total_events': Event.query.count(),
+        'pending_events': Event.query.filter_by(is_approved=False, is_cancelled=False).count()
+    }
+
+    
     return render_template(
         'admin/dashboard.html',
         title='Admin Dashboard',
@@ -35,6 +42,7 @@ def dashboard():
         total_events=total_events,
         pending_events=pending_events,
         approved_events=approved_events,
+        stats=stats,
         recent_pending=recent_pending
     )
 

@@ -23,10 +23,12 @@ def create_app():
     from routes.auth import auth_bp
     from routes.events import events_bp
     from routes.admin import admin_bp
+    from routes.issues import issues_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(events_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(issues_bp)
     
     # Create database tables
     with app.app_context():

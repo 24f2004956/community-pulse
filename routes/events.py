@@ -1,24 +1,57 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
 from flask_login import current_user, login_required
 from app import db
-from models import Event, User
+from models import Event, User,Issue
 from forms.event_forms import EventForm, InterestForm
 from datetime import datetime, timedelta
 from services.email_service import send_event_notification
 from services.sms_service import send_sms_notification
 
 events_bp = Blueprint('events', __name__)
+from sqlalchemy.sql import func
+from models import Event, Issue
+
+def haversine(lat1, lon1, lat2, lon2):
+    return 6371 * func.acos(
+        func.cos(func.radians(lat1)) *
+        func.cos(func.radians(lat2)) *
+        func.cos(func.radians(lon2) - func.radians(lon1)) +
+        func.sin(func.radians(lat1)) *
+        func.sin(func.radians(lat2))
+    )
 
 @events_bp.route('/')
 def home():
-    # Get upcoming events sorted by start time
+    # Get upcoming events
     upcoming_events = Event.query.filter(
         Event.start_time > datetime.utcnow(),
         Event.is_approved == True,
         Event.is_cancelled == False
     ).order_by(Event.start_time.asc()).limit(6).all()
-    
-    return render_template('index.html', events=upcoming_events)
+
+    # Get recent or nearby issues
+    nearby_issues = Issue.query.order_by(Issue.created_at.desc()).limit(6).all()
+
+    lat = session.get('user_lat')
+    lon = session.get('user_lon')
+    radius_km = 5  # You can make this adjustable later
+
+    if lat and lon:
+        distance_expr = haversine(lat, lon, Event.latitude, Event.longitude)
+        featured_events = db.session.query(Event).filter(
+            Event.is_approved == True,
+            Event.is_cancelled == False,
+            distance_expr <= radius_km
+        ).limit(9).all()
+
+        issues = db.session.query(Issue).filter(
+            haversine(lat, lon, Issue.latitude, Issue.longitude) <= radius_km
+        ).limit(6).all()
+    else:
+        featured_events = []
+        issues = []
+
+    return render_template('index.html', events=upcoming_events, issues=nearby_issues,featured_events=featured_events)
 
 @events_bp.route('/events')
 def list_events():
@@ -68,6 +101,18 @@ def list_events():
         date_from=date_from,
         date_to=date_to
     )
+
+@events_bp.route('/set-location')
+def set_location():
+    lat = request.args.get('lat', type=float)
+    lon = request.args.get('lon', type=float)
+
+    if lat and lon:
+        session['user_lat'] = lat
+        session['user_lon'] = lon
+        return '', 200
+    return 'Invalid coordinates', 400
+
 
 
 @events_bp.route('/events/create', methods=['GET', 'POST'])
